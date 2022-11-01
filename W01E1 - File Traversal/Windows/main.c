@@ -1,46 +1,78 @@
 /// -------------------------------- My Code -------------------------------- ///
 
+#include <windows.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <tlhelp32.h>
+#include <unistd.h>
 
 FILE *fpo;
 const int output_style = 2;
 
+// Find process with the given application name
+int findMyProc(const char *procname) {
+
+  HANDLE hSnapshot;
+  PROCESSENTRY32 pe;
+  BOOL hResult;
+  int count = 0;
+
+  // snapshot of all processes in the system
+  hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (INVALID_HANDLE_VALUE == hSnapshot)
+    return 0;
+
+  // initializing size: needed for using Process32First
+  pe.dwSize = sizeof(PROCESSENTRY32);
+
+  // info about first process encountered in a system snapshot
+  hResult = Process32First(hSnapshot, &pe);
+
+  // retrieve information about the processes
+  // and exit if unsuccessful
+  while (hResult) {
+    // if we find the process: return process ID
+    if (strcmp(procname, pe.szExeFile) == 0) {
+      count++;
+    }
+    hResult = Process32Next(hSnapshot, &pe);
+  }
+
+  // closes an open handle (CreateToolhelp32Snapshot)
+  CloseHandle(hSnapshot);
+  return count;
+}
+
+// Try open directory in txt file
 char* read_input(char* input_file) {
     char* dir = malloc(511);
     FILE *fp = fopen(input_file, "r");
-    if (fp) return fgets(dir,511,fp);
+    if (fp) {
+        printf("fp not NULL");
+        return fgets(dir,511,fp);
+    }
     else return NULL;
 }
 
-char* concat(char* left, char* right) {
-    if (!left) return right;
-    //printf("\nCalling function...\n");
-    int i,j,k=0;
-    char *ans = malloc(255);
-
-    for (i = 0; left[i] != '\0'; i++, k++) {
-        ans[k] = left[i];
-    }
-    for (j = 0; right[j] != '\0'; j++, k++) {
-        ans[k] = right[j];
-    }
-    ans[k] = '\0';
-    return ans;
-}
-
-
+// Diverse at max depth of 10, concat
 int travel(char* file_or_folder, char* root_folder, int depth) {
     if (depth > 10) return 0;
 
-    char* need_to_open = file_or_folder;
-    if (depth > 0) need_to_open = concat(root_folder, concat("/", file_or_folder));
+    char* need_to_open = malloc(1024);
+    if(depth > 0) sprintf(need_to_open, "%s\\%s", root_folder, file_or_folder);
+    else need_to_open = file_or_folder;
+
+    struct stat statbuf;
+
     DIR *dir = opendir(need_to_open);
     if (!dir) {
-        printf("ERROR: This directory is not valid, or you don't have permission to access!\n%s\n", need_to_open);
-        fprintf(fpo, " (ERROR when trying to open this)");
+        //printf("ERROR: This directory is not valid, or you don't have permission to access!\n%s\n", need_to_open);
+        //fprintf(fpo, " (ERROR when trying to open this)");
+        if (depth==0) printf("NOOO");
         return (depth > 0? 0: 3);
     }
 
@@ -48,8 +80,14 @@ int travel(char* file_or_folder, char* root_folder, int depth) {
     int file_type;
     struct dirent *dp;
     while ((dp=readdir(dir)) != NULL) {
+        // check error path
+        if (stat(need_to_open, &statbuf) == -1) {
+            fprintf(stderr, "stat error: %s", need_to_open);
+            return (depth > 0? 0: 3);
+        }
+
         file_name = dp->d_name;
-        file_type = dp->d_type;
+        ///file_type = dp->d_type;
         //printf("%d", file_type);
         if (strcmp("..", file_name) != 0 && strcmp(".", file_name) != 0) {
             fprintf(fpo,"\n");
@@ -57,11 +95,15 @@ int travel(char* file_or_folder, char* root_folder, int depth) {
                 for (int i = 0; i < depth; i++) fprintf(fpo, "  ");
                 fprintf(fpo, "- %s", file_name);
             } else if (output_style == 2) {
-                fprintf(fpo, "%s", concat(need_to_open, concat("/", file_name)));
+                fprintf(fpo, "%s\\%s", need_to_open, file_name);
             } else {
-                printf("%s", concat(need_to_open, concat("/", file_name)));
+                printf("%s\\%s", need_to_open, file_name);
             }
-            if (file_type == 4) {
+            /// if (file_type == 4) {
+            if (S_ISREG(statbuf.st_mode)) {
+                return 0;
+            }
+            if (S_ISDIR(statbuf.st_mode)) {
                 if (travel(file_name, need_to_open, 1 + depth) > 0) return 3;
             }
         }
@@ -72,15 +114,22 @@ int travel(char* file_or_folder, char* root_folder, int depth) {
 
 int main()
 {
+    /// ------------ Prevent Double Running ------------- ///
+    //getchar();
+    if (findMyProc("myapp.exe") > 1) {
+        printf("Error: process is already running!!!\n");
+        exit(-1);
+    }
+
     /// ---------- Get directory in input file ---------- ///
     if (read_input("inp.txt") == NULL) {
-        printf("ERROR: Input file is empty or not existed!\n");
+        printf("ERROR: Input file is empty or not existed!!!~~~\n");
         return 1;
     }
     char* input_folder = read_input("inp.txt");
     for (int i = 0; input_folder[i] != '\0'; i++)
         if (input_folder[i] == '\n') {
-            input_folder[i] = 0;
+            input_folder[i] = '\0';
             break;
         }
     printf("%s\n", input_folder);
@@ -88,89 +137,9 @@ int main()
     /// ---------------- File traversal ---------------- ///
     fpo = fopen("out.txt", "w");
     fprintf(fpo, "Traversal in this directory: %s", input_folder);
-    return travel(input_folder, NULL, 0);
-    printf("%d %d %d %d %d %d %d %d",
-       DT_UNKNOWN, DT_REG, DT_DIR, DT_FIFO,
-       DT_SOCK, DT_CHR, DT_BLK, DT_LNK);
+    int ret = travel(input_folder, NULL, 0);
+    printf("\nDone\n");
+    getchar();
+    return ret;
+    // printf("%d %d %d %d %d %d %d %d", DT_UNKNOWN, DT_REG, DT_DIR, DT_FIFO, DT_SOCK, DT_CHR, DT_BLK, DT_LNK);
 }
-
-/// -------------------------------- Solution -------------------------------- ///
-/*
-#include <conio.h>
-#include <windows.h>
-#include <stdio.h>
-#include<string.h>
-#include<stdlib.h>
-
-int depth = 10;
-int count = 0;
-
-void EnumerateFolders (char* parent)
-{
-    WIN32_FIND_DATA fd;
-    char folder[MAX_PATH];
-    sprintf(folder, "%s\\*.*", parent);
-
-    HANDLE hFind = FindFirstFile (folder, &fd);
-
- 	count++;
-    printf("count: %d\n", count);
-    if (hFind != INVALID_HANDLE_VALUE)
-    {
-        do {
-            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            {
-                if (strcmp(fd.cFileName, ".") && strcmp(fd.cFileName, ".."))
-                {
-                    //fprintf (fp, "%s\\%s\n", parent, fd.cFileName);
-                    printf ("%s\\%s\n", parent, fd.cFileName);
-                    char child[MAX_PATH];
-                    sprintf(child, "%s\\%s", parent, fd.cFileName);
-
-                    if (count <= depth) {
-					EnumerateFolders (child);
-					}
-					else{
-						count = 0;
-					}
-                }
-            }
-            else
-            {
-                fprintf(fp, "%s\n", fd.cFileName);
-                //printf("%s\n", fd.cFileName);
-            }
-        } while (FindNextFile (hFind, &fd));
-        FindClose (hFind);
-    }
-    //fclose(fp);
-}
-
-
-main()
-{
-
-	//freopen("output.txt","w",stdout);
-	FILE * fpi = NULL;
-    char arr[128];
-
-    //open file input
-    fpi= fopen("inp.txt", "r");
-
-    //read
-    fgets(arr, 128, fpi);
-
-    //FILE * fp = NULL;
-    fp = fopen("output.txt", "w");
-
-    FILE *fp;
-
-    fp = freopen("out.txt", "w+", stdout);
-
-    EnumerateFolders(arr);
-    //fclose(fp);
-    fclose(fpi);
-    fclose(fp);
-    getch();
-}
-*/
