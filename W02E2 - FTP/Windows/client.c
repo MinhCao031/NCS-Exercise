@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
     FILE *File;
     File = fopen (fileName, "rb");
     if(!File) {
-        printf ("Error while readaing the file\n");
+        printf ("Error while reading the file\n");
     } else {
         // printf ("File opened successfully!\n");
         fseek(File, 0, SEEK_END);
