@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
         fread(Buffer, Size, 1, File);
         fclose(File);
         send(dataSocket, Buffer, Size, 0); // File Binary
-        printf("7. Sent: *data_file*\n\n");
+        printf("7. Sent: [%d bytes]\n\n", Size);
         free(Buffer);
         // printf ("File sent successfully!\n");
     }
