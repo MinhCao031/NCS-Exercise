@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define MAX_SIZE 1024
-#define MAX_BYTE_READ 1048576
+#define SIZE_1 1024
+#define SIZE_2 1048576
 
 BOOL InitWinSock2_0();
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
             password1 = "1111";
             serverIPAddr = "127.0.0.1";
             serverPort = 21;
-            fileName = "data.txt";
+            fileName = "taikhoan.txt";
             // fileName = "2022-11-03.png";
             // dataPort = 204*256+47;
             break;
@@ -78,52 +78,52 @@ int main(int argc, char* argv[]) {
     printf("Connection established ............\n\n");
 
     // STEP 0: make sure there is a connection
-    char *welcome = malloc(MAX_SIZE);
-    recv(clientSocket, welcome, MAX_SIZE, 0);
+    char *welcome = malloc(SIZE_1);
+    recv(clientSocket, welcome, SIZE_1, 0);
     printf("0. Received: %s\n", welcome);
 
     // STEP 1: sent username
-    char *userinfo = malloc(MAX_SIZE);
+    char *userinfo = malloc(SIZE_1);
     sprintf(userinfo, "USER %s\r\n", userName1);
     send(clientSocket, userinfo, strlen(userinfo), 0);
     printf("1. Sent: %s\n", userinfo);
 
-    char *verifyusr = malloc(MAX_SIZE);
-    recv(clientSocket, verifyusr, MAX_SIZE, 0);
+    char *verifyusr = malloc(SIZE_1);
+    recv(clientSocket, verifyusr, SIZE_1, 0);
     printf("1. Received: %s\n", verifyusr);
 
     // STEP 2: sent password
-    char *passinfo = malloc(MAX_SIZE);
+    char *passinfo = malloc(SIZE_1);
     sprintf(passinfo, "PASS %s\r\n", password1);
     send(clientSocket, passinfo, strlen(passinfo), 0);
     printf("2. Sent: %s\n", passinfo);
 
-    char *verifypwd = malloc(MAX_SIZE);
-    recv(clientSocket, verifypwd, MAX_SIZE, 0);
+    char *verifypwd = malloc(SIZE_1);
+    recv(clientSocket, verifypwd, SIZE_1, 0);
     printf("2. Received: %s\n", verifypwd);
 
     // STEP 3: set directory
     send(clientSocket, "CWD /\r\n", strlen("CWD /\r\n"), 0);
     printf("3. Sent: %s\n", "CWD /\r\n");
 
-    char *cwd = malloc(MAX_SIZE);
-    recv(clientSocket, cwd, MAX_SIZE, 0);
+    char *cwd = malloc(SIZE_1);
+    recv(clientSocket, cwd, SIZE_1, 0);
     printf("3. Received: %s\n", cwd);
 
     // STEP 4: sent type A
     send(clientSocket, "TYPE A\r\n", strlen("TYPE A\r\n"), 0);
     printf("4. Sent: %s\n", "TYPE A\r\n");
 
-    char *typeA = malloc(MAX_SIZE);
-    recv(clientSocket, typeA, MAX_SIZE, 0);
+    char *typeA = malloc(SIZE_1);
+    recv(clientSocket, typeA, SIZE_1, 0);
     printf("4. Received: %s\n", typeA);
 
     // STEP 5.0: try entering Passive Mode
     send(clientSocket, "PASV\r\n", strlen("PASV\r\n"), 0);
     printf("5. Sent: %s\n", "PASV\r\n");
 
-    char *dataPortInfo = malloc(MAX_SIZE);
-    recv(clientSocket, dataPortInfo, MAX_SIZE, 0);
+    char *dataPortInfo = malloc(SIZE_1);
+    recv(clientSocket, dataPortInfo, SIZE_1, 0);
     printf("5. Received: %s\n", dataPortInfo);
 
     // STEP 5.1: calculate data Port
@@ -137,18 +137,18 @@ int main(int argc, char* argv[]) {
     num[0] = atoi(dataPortInfo+num[2]);
     num[1] = atoi(dataPortInfo+num[3]);
     // printf("%d\t%d\n", num[2], num[3]);
-    // printf("%d\t%d\n", num[0], num[1]);   
+    // printf("%d\t%d\n", num[0], num[1]);
     dataPort =  num[0] * 256 + num[1];
     printf("Data Port = %d * 256 + %d = %d\n\n", num[0], num[1], dataPort);
 
     // STEP 6: specify file name
-    char *sentFile = malloc(MAX_SIZE);
+    char *sentFile = malloc(SIZE_1);
     sprintf(sentFile, "STOR %s\r\n", fileName);
     send(clientSocket, sentFile, strlen(sentFile), 0);
     printf("6. Sent: %s\n", sentFile);
 
-    char *startSending = malloc(MAX_SIZE);
-    recv(clientSocket, startSending, MAX_SIZE, 0);
+    char *startSending = malloc(SIZE_1);
+    recv(clientSocket, startSending, SIZE_1, 0);
     printf("6. Received: %s\n", startSending);
 
     // STEP 7.0: setup another socket for data transfer
@@ -194,15 +194,15 @@ int main(int argc, char* argv[]) {
         unsigned long Size = ftell(File);
         fseek(File, 0, SEEK_SET);
         char *Buffer = malloc(Size);
-        
-        for (int i = Size; i >= 0; i -= MAX_BYTE_READ) { 
-            fread(Buffer, MAX_BYTE_READ, 1, File);
-            int sentSize = send(dataSocket, Buffer, MAX_BYTE_READ, 0);
+
+        for (int i = Size; i >= 0; i -= SIZE_2) {
+            fread(Buffer, SIZE_2, 1, File);
+            int sentSize = send(dataSocket, Buffer, SIZE_2, 0);
             printf("7. Sent: [%d bytes], %d bytes left\n\n",
-                sentSize, (i - MAX_BYTE_READ > 0? i - MAX_BYTE_READ: 0));
+                sentSize, (i - SIZE_2 > 0? i - SIZE_2: 0));
         }
-        
-        fclose(File);        
+
+        fclose(File);
         free(Buffer);
         // printf ("File sent successfully!\n");
     }
@@ -213,8 +213,8 @@ int main(int argc, char* argv[]) {
     send(clientSocket, "QUIT\r\n", strlen("QUIT\r\n"), 0);
     printf("8. Sent: %s\n", "QUIT\r\n");
 
-    char *confirmExit = malloc(MAX_SIZE);
-    recv(clientSocket, confirmExit, MAX_SIZE, 0);
+    char *confirmExit = malloc(SIZE_1);
+    recv(clientSocket, confirmExit, SIZE_1, 0);
     printf("8. Received: %s\n", confirmExit);
 
     closesocket(clientSocket);
@@ -224,9 +224,9 @@ int main(int argc, char* argv[]) {
 }
 
 BOOL InitWinSock2_0() {
-  WSADATA wsaData;
-  WORD wVersion = MAKEWORD(2, 0);
-  if (!WSAStartup(wVersion, &wsaData))
-    return TRUE;
-  return FALSE;
+    WSADATA wsaData;
+    WORD wVersion = MAKEWORD(2, 0);
+    if (!WSAStartup(wVersion, &wsaData))
+        return TRUE;
+    return FALSE;
 }
