@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #define MAX_SIZE 1024
+#define MAX_BYTE_READ 1048576
 
 BOOL InitWinSock2_0();
 
@@ -193,11 +194,15 @@ int main(int argc, char* argv[]) {
         unsigned long Size = ftell(File);
         fseek(File, 0, SEEK_SET);
         char *Buffer = malloc(Size);
-
-        fread(Buffer, Size, 1, File);
-        fclose(File);
-        send(dataSocket, Buffer, Size, 0); // File Binary
-        printf("7. Sent: [%d bytes]\n\n", Size);
+        
+        for (int i = Size; i >= 0; i -= MAX_BYTE_READ) { 
+            fread(Buffer, MAX_BYTE_READ, 1, File);
+            int sentSize = send(dataSocket, Buffer, MAX_BYTE_READ, 0);
+            printf("7. Sent: [%d bytes], %d bytes left\n\n",
+                sentSize, (i - MAX_BYTE_READ > 0? i - MAX_BYTE_READ: 0));
+        }
+        
+        fclose(File);        
         free(Buffer);
         // printf ("File sent successfully!\n");
     }
