@@ -5,41 +5,53 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define SIZE_1 1024
-#define SIZE_2 1048576
+#define SIZE_1 512
+#define SIZE_2 32768
+
+char *instruction = "\nExpected format: .\\[compile].exe [1] [2] [3] [4] [5]\n"
+    "[1]: 0 is to type any, 1 is auto-send, 2 is auto-receive\n"
+    "[2]: Server's address\n"
+    "[3]: Your userName\n"
+    "[4]: Your password\n"
+    "[5]: File's name\n\n";
+char *userName1;
+char *password1;
+char *serverIPAddr;
+char *fileName;
+int serverPort = 21;
+int dataPort;
+int sendORrecv; // 1 is sent, 2 is recv
+int temp;
+
+SOCKET clientSocket;
+
+void handleArguments(
+    int* sendORrecv, char** userName1, char** password1, 
+    char** serverIPAddr, char** fileName, int argc, char* argv[]
+);
 
 BOOL InitWinSock2_0();
 
-int main(int argc, char* argv[]) {
-    printf("Expected format: .\\[compile].exe [userName] [password] [serverAddress] [fileName] [serverPort]\n");
-    char *userName1 = malloc(64);
-    char *password1 = malloc(32);
-    char *serverIPAddr = malloc(20);
-    int serverPort;
-    int dataPort;
-    char *fileName = malloc(256);
-    switch(argc) {
-        case 6: serverPort = atoi(argv[5]);
-        case 5: fileName = argv[4];
-        case 4: serverIPAddr = argv[3];
-        case 3: password1 = argv[2];
-        case 2: {
-            userName1 = argv[1];
-            break;
-        }
-        default: {
-            userName1 = "m01";
-            password1 = "1111";
-            serverIPAddr = "127.0.0.1";
-            serverPort = 21;
-            fileName = "taikhoan.txt";
-            // fileName = "2022-11-03.png";
-            // dataPort = 204*256+47;
-            break;
-        }
-    }
-    printf("userName: %s\npassword: %s\nserverIPAddr: %s\nserverPort: %d\nfileName: %s\n",
-        userName1, password1, serverIPAddr, serverPort, fileName);
+int setupAndListen (SOCKET *socketFromClient, char* IPAddr, int port);
+
+void sendToServer (SOCKET toSocket, char* cmd1, char* cmd2);
+
+char* recvFromServer (SOCKET fromSocket);
+
+char* sendAndRecv (SOCKET toSocket, char* send, char* recv);
+
+void calculatePasvPort(char* message, int* pasvPort);
+
+BOOL sentFile(SOCKET dataSocket, char* fileName);
+
+BOOL recvFile(SOCKET dataSocket, char* fileName);
+
+int main (int argc, char* argv[]) {
+    printf("%s", instruction);
+    handleArguments(
+        &sendORrecv, &userName1, &password1, 
+        &serverIPAddr, &fileName, argc, argv
+    );
 
     // Init socket
     if (!InitWinSock2_0()) {
@@ -47,14 +59,169 @@ int main(int argc, char* argv[]) {
         WSAGetLastError());
         return -11;
     }
-    SOCKET clientSocket;
-    clientSocket = socket(
+    temp = setupAndListen(&clientSocket, serverIPAddr, serverPort);
+    if (temp < 0) {
+        printf("ERROR #1 temp = %d", temp);
+        return -100;
+    }
+
+
+    if (sendORrecv > 0) {
+    // STEP 0: make sure there is a connection
+        recvFromServer(clientSocket);
+    // STEP 1: sent username
+        sendAndRecv(clientSocket, "USER ", userName1);
+    // STEP 2: sent password
+        sendAndRecv(clientSocket, "PASS ", password1);   
+    // STEP 3: set directory
+        sendAndRecv(clientSocket, "CWD ", "/");   
+    // STEP 4: sent type A
+        sendAndRecv(clientSocket, "TYPE ", "A");   
+    // SEND FILE
+        if (sendORrecv == 1) {
+        // STEP 5.0: try entering Passive Mode
+            char *dataPortInfo = sendAndRecv(clientSocket, "PASV", "");;
+        // STEP 5.1: calculate data Port
+            calculatePasvPort(dataPortInfo, &dataPort);
+        // STEP 6: specify file name to sent to server
+            sendAndRecv(clientSocket, "STOR ", fileName);
+        // STEP 7.0: setup another socket for data transfer
+            SOCKET dataSocket;
+            temp = setupAndListen(&dataSocket, serverIPAddr, dataPort);
+            if (temp < 0) {
+                printf("ERROR #2 temp = %d", temp);
+                return -201;
+            }    
+            printf("Ready to send files ............\n\n");
+        // STEP 7.1: sent file
+            if(!sentFile(dataSocket, fileName)) {
+                printf("ERROR #3");
+                return -202;
+            } else closesocket(dataSocket);
+    // RECEIVE FILE       
+        } else if (sendORrecv == 2) {
+        // STEP 5.0: try entering Passive Mode
+            char *dataPortInfo = sendAndRecv(clientSocket, "PASV", "");;
+        // STEP 5.1: calculate data Port
+            calculatePasvPort(dataPortInfo, &dataPort);
+        // STEP 6: specify file name to sent to server
+            sendAndRecv(clientSocket, "RETR ", fileName);
+        // STEP 7.0: setup another socket for data transfer
+            SOCKET dataSocket;
+            temp = setupAndListen(&dataSocket, serverIPAddr, dataPort);
+            if (temp < 0) {
+                printf("ERROR #4 temp = %d", temp);
+                return -301;
+            }    
+            printf("Ready to receive files ............\n\n");
+        // STEP 7.1: sent file
+            if(!recvFile(dataSocket, fileName)) {
+                printf("ERROR #5");
+                return -302;
+            } else closesocket(dataSocket);        
+        } else {
+            printf("\n*****\nERROR: The second parameter must be 0, 1 or 2\n*****\n");
+        }
+    // STEP 8: quit
+        sendAndRecv(clientSocket, "QUIT", "");
+        closesocket(clientSocket);        
+    } else {
+    // STEP 0: make sure there is a connection
+        recvFromServer(clientSocket);
+
+        while (1) {
+            char* inp = malloc(SIZE_1);
+            printf("\n\nPlease type a command: ");
+            fgets(inp, SIZE_1, stdin);
+            *(inp + strlen(inp) - 1) = '\0';
+            // printf("Sent: ->%s<-\n\n", inp);
+            char *out = sendAndRecv(clientSocket, inp, "");
+            if (strstr(inp, "PASV")) {
+                calculatePasvPort(out, &dataPort);
+                continue;
+            } else if (strstr(inp, "STOR")) {
+                SOCKET dataSocket;
+                temp = setupAndListen(&dataSocket, serverIPAddr, dataPort);
+                if (temp < 0) {
+                    printf("ERROR #6 temp = %d", temp);
+                    return -401;
+                }
+                fileName = inp+5;
+                if (sentFile(dataSocket, fileName)) {
+                    printf("Sent successfully\n");
+                    closesocket(dataSocket); 
+                } else {
+                    printf("ERROR #7");
+                    return -402;
+                }        
+            } else if (strstr(inp, "RETR")) {
+                SOCKET dataSocket;
+                temp = setupAndListen(&dataSocket, serverIPAddr, dataPort);
+                if (temp < 0) {
+                    printf("ERROR #6 temp = %d", temp);
+                    return -401;
+                }
+                fileName = inp+5;
+                if (recvFile(dataSocket, fileName)) {
+                    printf("Receive successfully\n");
+                    closesocket(dataSocket); 
+                } else {
+                    printf("ERROR #8");
+                    return -403;
+                } 
+            } else if (strstr(inp, "QUIT")) break;
+        }
+    }
+
+    WSACleanup();
+    printf("%s", instruction);
+    return 0;
+}
+
+/** ---------------------------------------- End of main function ---------------------------------------- **/
+
+BOOL InitWinSock2_0 () {
+    WSADATA wsaData;
+    WORD wVersion = MAKEWORD(2, 0);
+    if (!WSAStartup(wVersion, &wsaData))
+        return TRUE;
+    return FALSE;
+}
+
+void handleArguments (
+    int* sendORrecv, char** userName1, char** password1, 
+    char** serverIPAddr, char** fileName, int argc, char* argv[]
+) {
+    switch(argc) {
+        case 6: *fileName = argv[5];
+        case 5: *password1 = argv[4];
+        case 4: *userName1 = argv[3];
+        case 3: *serverIPAddr = argv[2];
+        case 2: {
+            *sendORrecv = atoi(argv[1]);
+            if (*sendORrecv == 0) *serverIPAddr = "127.0.0.1";
+            break;
+        }
+        default: {
+            *userName1 = "m01";
+            *password1 = "1111";
+            *sendORrecv = 1;
+            *fileName = "rndvid.mp4";
+            break;
+        }
+    }
+    printf("userName: %s\npassword: %s\nserverIPAddr: %s\nfileName: %s\n",
+        *userName1, *password1, *serverIPAddr, *fileName);
+}
+
+int setupAndListen(SOCKET* socketFromClient, char* IPAddr, int port) {
+    *socketFromClient = socket(
         AF_INET,     // The address family. AF_INET specifies TCP/IP
         SOCK_STREAM, // Protocol type. SOCK_STREM specified TCP
         0 // Protoco Name. Should be 0 for AF_INET address family
     );
-    printf("Client Socket ID: %d\n", clientSocket);
-    if (clientSocket == INVALID_SOCKET) {
+    printf("Client Socket ID: %d\n", *socketFromClient);
+    if (*socketFromClient == INVALID_SOCKET) {
         printf("Unable to create Server socket\n");
         // Cleanup the environment initialized by WSAStartup()
         WSACleanup();
@@ -64,169 +231,101 @@ int main(int argc, char* argv[]) {
     // Create the structure describing various Server parameters
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET; // The address family. MUST be AF_INET
-    serverAddr.sin_addr.s_addr = inet_addr(serverIPAddr);
-    serverAddr.sin_port = htons(serverPort);
+    serverAddr.sin_addr.s_addr = inet_addr(IPAddr);
+    serverAddr.sin_port = htons(port);
 
     // Connect to the server
-    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-        printf("Unable to connect to %s on port %d\n", serverIPAddr, serverPort);
-        closesocket(clientSocket);
+    if (connect(*socketFromClient, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
+        printf("Unable to connect to %s on port %d\n", IPAddr, port);
+        closesocket(*socketFromClient);
         WSACleanup();
         return -13;
     }
-
     printf("Connection established ............\n\n");
+    return (int) *socketFromClient;
+}
 
-    // STEP 0: make sure there is a connection
-    char *welcome = malloc(SIZE_1);
-    recv(clientSocket, welcome, SIZE_1, 0);
-    printf("0. Received: %s\n", welcome);
+void sendToServer(SOCKET toSocket, char* cmd1, char* cmd2) {
+    char *toSend = malloc(SIZE_1);
+    sprintf(toSend, "%s%s\r\n", cmd1, cmd2);
+    send(toSocket, toSend, strlen(toSend), 0);
+    printf("Sent: {%s}\n", toSend);    
+}
 
-    // STEP 1: sent username
-    char *userinfo = malloc(SIZE_1);
-    sprintf(userinfo, "USER %s\r\n", userName1);
-    send(clientSocket, userinfo, strlen(userinfo), 0);
-    printf("1. Sent: %s\n", userinfo);
+char* recvFromServer(SOCKET fromSocket) {
+    char *toRecv = malloc(SIZE_1);
+    recv(fromSocket, toRecv, SIZE_1, 0);
+    printf("Received: [%s]\n", toRecv);
+    return toRecv;
+}
 
-    char *verifyusr = malloc(SIZE_1);
-    recv(clientSocket, verifyusr, SIZE_1, 0);
-    printf("1. Received: %s\n", verifyusr);
+char* sendAndRecv(SOCKET socketID, char* cmd1, char* cmd2) {
+    sendToServer(socketID, cmd1, cmd2);
+    return recvFromServer(socketID);
+}
 
-    // STEP 2: sent password
-    char *passinfo = malloc(SIZE_1);
-    sprintf(passinfo, "PASS %s\r\n", password1);
-    send(clientSocket, passinfo, strlen(passinfo), 0);
-    printf("2. Sent: %s\n", passinfo);
-
-    char *verifypwd = malloc(SIZE_1);
-    recv(clientSocket, verifypwd, SIZE_1, 0);
-    printf("2. Received: %s\n", verifypwd);
-
-    // STEP 3: set directory
-    send(clientSocket, "CWD /\r\n", strlen("CWD /\r\n"), 0);
-    printf("3. Sent: %s\n", "CWD /\r\n");
-
-    char *cwd = malloc(SIZE_1);
-    recv(clientSocket, cwd, SIZE_1, 0);
-    printf("3. Received: %s\n", cwd);
-
-    // STEP 4: sent type A
-    send(clientSocket, "TYPE A\r\n", strlen("TYPE A\r\n"), 0);
-    printf("4. Sent: %s\n", "TYPE A\r\n");
-
-    char *typeA = malloc(SIZE_1);
-    recv(clientSocket, typeA, SIZE_1, 0);
-    printf("4. Received: %s\n", typeA);
-
-    // STEP 5.0: try entering Passive Mode
-    send(clientSocket, "PASV\r\n", strlen("PASV\r\n"), 0);
-    printf("5. Sent: %s\n", "PASV\r\n");
-
-    char *dataPortInfo = malloc(SIZE_1);
-    recv(clientSocket, dataPortInfo, SIZE_1, 0);
-    printf("5. Received: %s\n", dataPortInfo);
-
-    // STEP 5.1: calculate data Port
+void calculatePasvPort(char* message, int* pasvPort) {
     int countComma = 0;
     int num[4] = {0, 0, 0, 0};
-    for (int i = 0; *(dataPortInfo + i) != ')'; i++) if (*(dataPortInfo + i) == ',') {
+    for (int i = 0; *(message + i) != ')'; i++) if (*(message + i) == ',') {
         // printf("i: %d\n", i);
         countComma++;
         if (countComma > 3) num[countComma - 2] = i + 1;
     }
-    num[0] = atoi(dataPortInfo+num[2]);
-    num[1] = atoi(dataPortInfo+num[3]);
+    num[0] = atoi(message + num[2]);
+    num[1] = atoi(message + num[3]);
     // printf("%d\t%d\n", num[2], num[3]);
     // printf("%d\t%d\n", num[0], num[1]);
-    dataPort =  num[0] * 256 + num[1];
-    printf("Data Port = %d * 256 + %d = %d\n\n", num[0], num[1], dataPort);
-
-    // STEP 6: specify file name
-    char *sentFile = malloc(SIZE_1);
-    sprintf(sentFile, "STOR %s\r\n", fileName);
-    send(clientSocket, sentFile, strlen(sentFile), 0);
-    printf("6. Sent: %s\n", sentFile);
-
-    char *startSending = malloc(SIZE_1);
-    recv(clientSocket, startSending, SIZE_1, 0);
-    printf("6. Received: %s\n", startSending);
-
-    // STEP 7.0: setup another socket for data transfer
-    SOCKET dataSocket;
-    dataSocket = socket(
-        AF_INET,     // The address family. AF_INET specifies TCP/IP
-        SOCK_STREAM, // Protocol type. SOCK_STREM specified TCP
-        0 // Protoco Name. Should be 0 for AF_INET address family
-    );
-    printf("Data Socket ID: %d\n", dataSocket);
-    if (dataSocket == INVALID_SOCKET) {
-        printf("Unable to create Server socket\n");
-        // Cleanup the environment initialized by WSAStartup()
-        WSACleanup();
-        return -14;
-    }
-
-    // Create the structure describing various Server parameters
-    struct sockaddr_in dataServerAddr;
-    dataServerAddr.sin_family = AF_INET; // The address family. MUST be AF_INET
-    dataServerAddr.sin_addr.s_addr = inet_addr(serverIPAddr);
-    dataServerAddr.sin_port = htons(dataPort);
-
-    // Connect to the server
-    if (connect(dataSocket, (struct sockaddr *)&dataServerAddr, sizeof(dataServerAddr)) < 0) {
-        printf("Unable to connect to %s on port %d\n", serverIPAddr, dataPort);
-        closesocket(dataSocket);
-        WSACleanup();
-        return -15;
-    }
-
-    printf("Another connection established, ready to send files ............\n\n");
-
-
-    // STEP 7.1: sent file
-    FILE *File;
-    File = fopen (fileName, "rb");
-    if(!File) {
-        printf ("Error while reading the file\n");
-    } else {
-        // printf ("File opened successfully!\n");
-        fseek(File, 0, SEEK_END);
-        unsigned long Size = ftell(File);
-        fseek(File, 0, SEEK_SET);
-        char *Buffer = malloc(Size);
-
-        for (int i = Size; i >= 0; i -= SIZE_2) {
-            fread(Buffer, SIZE_2, 1, File);
-            int sentSize = send(dataSocket, Buffer, SIZE_2, 0);
-            printf("7. Sent: [%d bytes], %d bytes left\n\n",
-                sentSize, (i - SIZE_2 > 0? i - SIZE_2: 0));
-        }
-
-        fclose(File);
-        free(Buffer);
-        // printf ("File sent successfully!\n");
-    }
-    closesocket(dataSocket);
-
-
-    // STEP 8: quit
-    send(clientSocket, "QUIT\r\n", strlen("QUIT\r\n"), 0);
-    printf("8. Sent: %s\n", "QUIT\r\n");
-
-    char *confirmExit = malloc(SIZE_1);
-    recv(clientSocket, confirmExit, SIZE_1, 0);
-    printf("8. Received: %s\n", confirmExit);
-
-    closesocket(clientSocket);
-    WSACleanup();
-    printf("Expected format: .\\[compile].exe [userName] [password] [serverAddress] [fileName] [serverPort]\n");
-    return 0;
+    *pasvPort =  num[0] * 256 + num[1];
+    printf("Data Port = %d * 256 + %d = %d\n\n", num[0], num[1], *pasvPort);
 }
 
-BOOL InitWinSock2_0() {
-    WSADATA wsaData;
-    WORD wVersion = MAKEWORD(2, 0);
-    if (!WSAStartup(wVersion, &wsaData))
+BOOL sentFile(SOCKET dataSocket, char* fileName) {
+    FILE *fileSend;
+    fileSend = fopen (fileName, "rb");
+    if(!fileSend) {
+        printf ("Error while reading the file\n");
+        return FALSE;
+    } else {
+        //printf ("File opened successfully!\n");
+        printf("Client data has connected!");
+        fseek(fileSend, 0, SEEK_END);
+        unsigned long Size = ftell(fileSend);
+        fseek(fileSend, 0, SEEK_SET);
+        char *buffer = malloc(Size);
+
+        printf("\n%d\n", Size);
+        for (int i = Size; i >= 0; i -= SIZE_2) {
+            fread(buffer, min(i,SIZE_2), 1, fileSend);
+            int sentSize = send(dataSocket, buffer, min(i,SIZE_2), 0);
+            printf("7. Sent: [%d bytes], %d bytes left\n\n",
+                sentSize, (i - SIZE_2 > 0? i - SIZE_2: 0));
+            printf("7. Sent: {%s}\n\n\n", buffer);
+        }
+
+        fclose(fileSend);
+        free(buffer);
         return TRUE;
-    return FALSE;
+        //printf ("File sent successfully!\n");
+    }
+}
+
+BOOL recvFile(SOCKET dataSocket, char* fileName) {
+    FILE *fileRecv;
+    fileRecv = fopen (fileName, "wb");
+    if(!fileRecv) {
+        printf ("Error while reading the file\n");
+        return FALSE;
+    } else {
+        //printf ("File opened successfully!\n");
+        char* buffer = malloc(SIZE_2);
+        int recvBytes = recv(dataSocket, buffer, SIZE_2, 0);
+        while (recvBytes > 0) {
+            fwrite(buffer, sizeof(buffer[0]), recvBytes, fileRecv);
+            recvBytes = recv(dataSocket, buffer, SIZE_2, 0);
+        }
+        fclose(fileRecv);
+        return TRUE;
+        //printf ("File sent successfully!\n");
+    }
 }
