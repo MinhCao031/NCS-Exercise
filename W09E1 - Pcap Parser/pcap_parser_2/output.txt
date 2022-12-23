@@ -1,0 +1,178 @@
+Key: 7547721891036221824:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59506 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1034344241, exp seq UP: 2125211395
+		[UP] Seq: 2125211222, data size: 173
+		[UP] Seq: 2125211056, data size: 166
+		[UP] Seq: 2125210870, data size: 186
+		[UP] Seq: 2125210695, data size: 175
+		[DOWN] Seq: 1034344165, data size: 76
+		[DOWN] Seq: 1034343900, data size: 265
+		[DOWN] Seq: 1034343388, data size: 512
+		[DOWN] Seq: 1034342936, data size: 452
+		[DOWN] Seq: 1034342935, data size: 0
+
+Key: 2653507825751773568:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 35372 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1579081158, exp seq UP: 1954337614
+		[UP] Seq: 1954337441, data size: 173
+		[UP] Seq: 1954337275, data size: 166
+		[UP] Seq: 1954337089, data size: 186
+		[UP] Seq: 1954336914, data size: 175
+		[DOWN] Seq: 1579081082, data size: 76
+		[DOWN] Seq: 1579080817, data size: 265
+		[DOWN] Seq: 1579080305, data size: 512
+		[DOWN] Seq: 1579079853, data size: 452
+		[DOWN] Seq: 1579079852, data size: 0
+Key: 4682679424840585600:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 43016 <=> 49664
+	|Protocol: TCP
+	|exp seq DOWN: 2512877673, exp seq UP: 2535267257
+		[UP] Seq: 2535267241, data size: 6
+		[UP] Seq: 2535267240, data size: 6
+		[UP] Seq: 2535267239, data size: 6
+		[DOWN] Seq: 2512877672, data size: 0
+
+Key: 4343730406955635072:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 37922 <=> 49688
+	|Protocol: TCP
+	|exp seq DOWN: 3172960772, exp seq UP: 1620704073
+		[UP] Seq: 1620703689, data size: 384
+		[UP] Seq: 1620703588, data size: 101
+		[UP] Seq: 1620703468, data size: 120
+		[DOWN] Seq: 3172960740, data size: 32
+		[DOWN] Seq: 3172960514, data size: 226
+		[DOWN] Seq: 3172960513, data size: 0
+Key: 7564026411525558656:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59570 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1183959985, exp seq UP: 1031919174
+		[UP] Seq: 1031919001, data size: 173
+		[UP] Seq: 1031918835, data size: 166
+		[UP] Seq: 1031918649, data size: 186
+		[UP] Seq: 1031918474, data size: 175
+		[DOWN] Seq: 1183959909, data size: 76
+		[DOWN] Seq: 1183959644, data size: 265
+		[DOWN] Seq: 1183959132, data size: 512
+		[DOWN] Seq: 1183958680, data size: 452
+		[DOWN] Seq: 1183958679, data size: 0
+Key: 7564026411525558656:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59570 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1183959985, exp seq UP: 1031919174
+		[UP] Seq: 1031919001, data size: 173
+		[UP] Seq: 1031918835, data size: 166
+		[UP] Seq: 1031918649, data size: 186
+		[UP] Seq: 1031918474, data size: 175
+		[DOWN] Seq: 1183959909, data size: 76
+		[DOWN] Seq: 1183959644, data size: 265
+		[DOWN] Seq: 1183959132, data size: 512
+		[DOWN] Seq: 1183958680, data size: 452
+		[DOWN] Seq: 1183958679, data size: 0
+Key: 7573205435241943424:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59606 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 4242526276, exp seq UP: 3016386813
+		[UP] Seq: 3016386640, data size: 173
+		[UP] Seq: 3016386474, data size: 166
+		[UP] Seq: 3016386288, data size: 186
+		[UP] Seq: 3016386113, data size: 175
+		[DOWN] Seq: 4242526200, data size: 76
+		[DOWN] Seq: 4242525935, data size: 265
+		[DOWN] Seq: 4242525423, data size: 512
+		[DOWN] Seq: 4242524971, data size: 452
+		[DOWN] Seq: 4242524970, data size: 0
+Key: 3002767956307825024:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 37614 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 125719872, exp seq UP: 2878459766
+		[UP] Seq: 2878459593, data size: 173
+		[UP] Seq: 2878459427, data size: 166
+		[UP] Seq: 2878459241, data size: 186
+		[UP] Seq: 2878459066, data size: 175
+		[DOWN] Seq: 125719796, data size: 76
+		[DOWN] Seq: 125719531, data size: 265
+		[DOWN] Seq: 125719019, data size: 512
+		[DOWN] Seq: 125718567, data size: 452
+		[DOWN] Seq: 125718566, data size: 0
+Key: 7569125181951005056:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59590 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1654846651, exp seq UP: 2426395427
+		[UP] Seq: 2426395254, data size: 173
+		[UP] Seq: 2426395088, data size: 166
+		[UP] Seq: 2426394902, data size: 186
+		[UP] Seq: 2426394727, data size: 175
+		[DOWN] Seq: 1654846575, data size: 76
+		[DOWN] Seq: 1654846310, data size: 265
+		[DOWN] Seq: 1654845798, data size: 512
+		[DOWN] Seq: 1654845346, data size: 452
+		[DOWN] Seq: 1654845345, data size: 0
+Key: 3002125609588969856:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 37610 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1487462925, exp seq UP: 3418690799
+		[UP] Seq: 3418690626, data size: 173
+		[UP] Seq: 3418690460, data size: 166
+		[UP] Seq: 3418690274, data size: 186
+		[UP] Seq: 3418690099, data size: 175
+		[DOWN] Seq: 1487462849, data size: 76
+		[DOWN] Seq: 1487462584, data size: 265
+		[DOWN] Seq: 1487462072, data size: 512
+		[DOWN] Seq: 1487461620, data size: 452
+		[DOWN] Seq: 1487461619, data size: 0
+Key: 3095016655477494144:
+	|ip: 192.168.211.128 <=> 192.168.211.2, port: 37990 <=> 53
+	|Protocol: TCP
+	|exp seq DOWN: 706953312, exp seq UP: 3213327837
+		[UP] Seq: 3213327805, data size: 32
+		[UP] Seq: 3213327773, data size: 32
+		[UP] Seq: 3213327741, data size: 32
+		[UP] Seq: 3213327708, data size: 33
+		[UP] Seq: 3213327675, data size: 33
+		[UP] Seq: 3213327622, data size: 53
+		[UP] Seq: 3213327569, data size: 53
+		[UP] Seq: 3213327534, data size: 35
+		[UP] Seq: 3213327499, data size: 35
+		[UP] Seq: 3213327472, data size: 27
+		[UP] Seq: 3213327445, data size: 27
+		[DOWN] Seq: 706953216, data size: 96
+		[DOWN] Seq: 706953184, data size: 32
+		[DOWN] Seq: 706953152, data size: 32
+		[DOWN] Seq: 706953119, data size: 33
+		[DOWN] Seq: 706953086, data size: 33
+		[DOWN] Seq: 706953033, data size: 53
+		[DOWN] Seq: 706952980, data size: 53
+		[DOWN] Seq: 706952945, data size: 35
+		[DOWN] Seq: 706952910, data size: 35
+		[DOWN] Seq: 706952883, data size: 27
+		[DOWN] Seq: 706952856, data size: 27
+		[DOWN] Seq: 706952855, data size: 0
+Key: 7566575581989917056:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59580 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 1556514841, exp seq UP: 4249629281
+		[UP] Seq: 4249629108, data size: 173
+		[UP] Seq: 4249628942, data size: 166
+		[UP] Seq: 4249628756, data size: 186
+		[UP] Seq: 4249628581, data size: 175
+		[DOWN] Seq: 1556514765, data size: 76
+		[DOWN] Seq: 1556514500, data size: 265
+		[DOWN] Seq: 1556513988, data size: 512
+		[DOWN] Seq: 1556513536, data size: 452
+		[DOWN] Seq: 1556513535, data size: 0
+Key: 7561987384391717248:
+	|ip: 192.168.211.128 <=> 192.168.211.1, port: 59562 <=> 445
+	|Protocol: TCP
+	|exp seq DOWN: 3953061850, exp seq UP: 3862316671
+		[UP] Seq: 3862316498, data size: 173
+		[UP] Seq: 3862316332, data size: 166
+		[UP] Seq: 3862316146, data size: 186
+		[UP] Seq: 3862315971, data size: 175
+		[DOWN] Seq: 3953061774, data size: 76
+		[DOWN] Seq: 3953061509, data size: 265
+		[DOWN] Seq: 3953060997, data size: 512
+		[DOWN] Seq: 3953060545, data size: 452
+		[DOWN] Seq: 3953060544, data size: 0
+
