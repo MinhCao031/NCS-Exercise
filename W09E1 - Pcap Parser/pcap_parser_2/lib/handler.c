@@ -90,22 +90,13 @@ void insert_tcp_pkt(HashTable table, uint64_t flow_key, parsed_packet pkt, FILE*
       if (DEBUGGING) fprintf(fptr, "DOWN...\n");
       if (DEBUGGING) fprintf(fptr, "Checking down seq = %u...\n", flow->exp_seq_down);
       if (DEBUGGING) fprintf(fptr, "Checking real seq = %u...\n", pkt.tcp.seq);
-      if (1 || flow->exp_seq_down == pkt.tcp.seq) {
+      if (flow->exp_seq_down == pkt.tcp.seq) {
         if (DEBUGGING) fprintf(fptr, "CHECK: EQUAL\n");
-        do {
-          flow->exp_seq_down += ((parsed_payload *)new_pkt_node->value)->data_len;
-          insert_to_flow(new_pkt_node, DESC, &(flow->flow_down), fptr);
-          if (DEBUGGING) fprintf(fptr, "Inserted 1 TCP packet\n");/**/
-          delete_node(&head_wait_list, flow->exp_seq_down, fptr);
-          // flow->exp_seq_down += ((parsed_payload *)new_pkt_node->value)-> data_len;
-          new_pkt_node = search_node(head_wait_list, flow->exp_seq_down);
-        } while (new_pkt_node != NULL);        
+        flow->exp_seq_down += ((parsed_payload *)new_pkt_node->value)->data_len;
         insert_to_flow(new_pkt_node, DESC, &(flow->flow_down), fptr);
         if (DEBUGGING) fprintf(fptr, "Flow found, done inserting TCP\n");/**/
         if (DEBUGGING) fprintf(fptr, "Expected Seq UP/DOWN = %u, %u\n", flow->exp_seq_up, flow->exp_seq_down);/**/
         inserted_packets += 1;
-
-
       } else {
         if (DEBUGGING) fprintf(fptr, "CHECK: NOT EQUAL\n");
         insert_node_asc(&head_wait_list, new_pkt_node);
